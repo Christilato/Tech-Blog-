@@ -8,6 +8,8 @@ const { Post, User, Comment } = require('../models');
     // order the posts from most recent to least
     // from the User table, include the post crerator's user name
     // From the contents table, include all comments
+
+
     
 // render the posts
     // create an array for the posts, using the get method to trim extra sequelize data out

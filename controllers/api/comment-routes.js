@@ -1,18 +1,51 @@
 const router = require('express').Router();
 const { Comment } = require('../../models');
-const withAuth = require('../../utils/auth');
+const withAuth = require('../../utils/auth'); // do i need?
 
 // GET comments
-    // Access the Comment model and run findAll() method to get all comments
-    // return the data as  JSON formatted
-    // if there is a server error, return that error
+router.get('/', async (req, res) => {
+    try
+    {
+        const commentData = await Comment.findAll({
+            include: [{ model: Comment }]
+        });
+        res.status(200).json(commentData);
+    } catch (err)
+    {
+        res.status(500).json(err);
+    }
+});
 
 // POST a new comment
-    // check the sesssion, and if it exists, create a comment
-    // use the user is from the session
-    // if there is a server error, return that error
+router.post('/', async (req, res) => {
+    try
+    {
+        const commentData = await Comment.create(req.body);
+        res.status(200).json(commentData);
+    } catch (err)
+    {
+        res.status(400).json(err);
+    }
+});
 
 // DELETE a comment
-    // 
+router.delete('/:id', async (req, res) => {
+    try
+    {
+        const commentData = await Comment.destroy({
+            where: { id: req.params.id }
+        });
+        if (!commentData)
+        {
+            res.status(404).json({ message: 'No  comments with this id!' });
+            return;
+        }
+        res.status(200).json(commentData);
+    } catch (err)
+    {
+        res.status(500).json(err);
+    }
+});
 
-    module.exports = router;
+
+module.exports = router;
