@@ -1,24 +1,54 @@
 const router = require('express').Router();
-const sequelize = require('../config/connection');
-const { Post, User, Comment } = require('../models');
+const { Post } = require('../models');
 const withAuth = require('../utils/auth');
 
-// A route to render the dashboard page, only for a logged in user
-    // all of the users posts are obtained from the database
-    // user the ID from the session
-    // serialize data before passing to template
+// A GET route to render the dashboard page, only for a logged in user
+router.get('/', withAuth, async (req, res) => {
+    try
+    {
+        const postData = await Post.findAll({
+            where: {
+                user_id: req.session.user_id
+            }
+        });
+        const posts = postData.map((post) => post.get({plain: true}));
+        res.render("all-posts-admin", {
+            layout: "dashboard",
+            posts
+        });
+    }
+     catch (err)
+    {
+        res.redirect("login");
+    }
+});
 
-// A route to edit a post
-    // All of the users posts are obtained from the database
-    // if no  post by that id exists, return an error
-    // serialize data before passing to template
+// A GET route to edit a post on a new page
+router.get('/new', withAuth, (req, res) => {
+    res.render("new-post", {
+        layout: "dashboard"
+    });
+});
 
-// A route to edit the logged in user
-    // Access the user model and run the findOne() method to get a single user based on parameters
-    // when the data is sent back, exclude the password property
-    // use id as the parameter for the request
-    // if no user is found, return an error
-    // otherwise return the data for the requested user
-    // if tehre is a server error, return that error
+// A GET route to edit the post by id
+router.get('/edit/:id', withAuth, async (req, res) => {
+    try
+    {
+        const postData = await Post.findByPk(req.params.id);
+        if(postData) {
+            const post = postData.get({plain: true});
+            res.render("edit-post", {
+                layout: "dashboard",
+                post
+            });
+        } else {
+            res.status(404).end();
+        }            
+    }
+     catch (err)
+    {
+        res.redirect("login");
+    }
+}); 
 
     module.exports = router;
