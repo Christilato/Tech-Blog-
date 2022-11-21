@@ -1,64 +1,56 @@
 const router = require('express').Router();
-const { Post, User, Comment } = require('../models');
-const { route } = require('./dashboard-routes');
+const { Post, Comment, User } = require('../models/');
+const withAuth = require('../utils/auth');
 
-    
-// render the posts GET route
-    router.get('/', async (req, res) => {
-    try
-    {
+router.get('/', async (req, res) => {
+    try {
         const postData = await Post.findAll({
-            include: [User]
+            include: User,
         });
-        const posts = postData.map((post) => post.get({plain: true}));
-        res.render("all-posts", {posts});
-    } catch (err)
-    {
-        res.status(500).json(err);
+        const posts = postData.map((post) => post.get({ plain: true }));
+        res.render('all-posts-homepage', { layout: 'main', posts, logged_in: req.session.logged_in });
+    } catch (err) {
+        res.status(500),json(err);
     }
 });
 
-//render the single post page
-    router.get('/post/:id', async (req, res) => {
-    try
-    {
-        const singlePost = await Post.findByPk(req.params.id, { 
-            include: [ 
-               User, 
-                { 
-                    model: Comment, 
-                    include: [User]
-                },],
+router.get('/post/:id', withAuth, async (req, res) => {
+    try {
+        const postData = await Post.findOne({
+            where: {id: req.params.id},
+            include: [User, {
+                model: Comment,
+                include: User,
+            },
+        ],
         });
-        if (singlePost)
-        {
-            const post = singlePost.get({plain:true});
-            res.render("single-post", {post});
+        if (postData) {
+            const post = postData.get({ plain: true });
+            console.log(post);
+            res.render('single-post', { layout: 'main', post, logged_in: req.session.loggedIn});
         } else {
-            res.status(404).end();
+            res.status(400).end();
         }
-    } catch (err)
-    {
+    } catch (err) {
         res.status(500).json(err);
     }
 });
 
-// render the login page. If the user logged in, redirect to the homepage
-router.get('/login', (req, res)=> {
-    if(req.session.loggedIn){
-        res.redirect("/");
+router.get('/login', (req, res) => {
+    if (req.session.logged_in) {
+        res.redirect('/dashboard');
         return;
     }
     res.render('login');
 });
 
-// render the signup page. If the user is logged in, redirect to the homepage
-router.get('/signup', (req, res)=> {
-    if(req.session.loggedIn){
-        res.redirect("/");
+router.get('/signup', (req, res) => {
+    if (req.session.logged_in) {
+        res.redirect('/dashboard');
         return;
     }
     res.render('signup');
 });
+
 
 module.exports = router;
